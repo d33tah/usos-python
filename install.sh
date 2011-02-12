@@ -75,7 +75,7 @@ cd #pracujemy w katalogu domowym
 
 #uruchamiamy nasz program:
 	screen -S usos-python -d -m sh -c "
-		( while true; do ~/bin/python ~/usos-python/usos.py; sleep 600; done ) | tee -a ~/usos-python/log.txt"
+		( while true; do perl -e '$_=`date`; chomp; print "${_}: "';  ~/bin/python ~/usos-python/usos.py; sleep 600; done ) | tee -a ~/usos-python/log.txt"
 
 #i to na tyle. aby przejrzec jego logi/wylaczyc go, wykonujemy 'screen -X -S usos-python quit'
 	echo "Gotowe. usos-python uruchomiony. Aby go wylaczyc, wykonaj 'screen -X -S usos-python quit'."
