@@ -35,6 +35,19 @@ cd #pracujemy w katalogu domowym
 	git clone git://github.com/d33tah/usos-python.git
 
 #konfigurujemy go... (na razie dziala tylko pod plusem; konieczna rejestracja na simplus.pl)
+
+	#wybieramy i instalujemy bramke SMS
+	echo >&2
+        echo ">wybierz bramke SMS (eraapiprv, eraomnix, miastoplusa, orange, playmobile): " >&2
+        select sms_bin in eraapiprv eraomnix miastoplusa orange playmobile
+        do
+                case "$sms_bin" in
+                        eraapiprv|eraomnix|miastoplusa|orange|playmobile) break;;
+                esac
+        done
+	wget "http://skrypty-sms.googlecode.com/svn/trunk/sms.${sms_bin}.pl" -O ~/usos-python/sms
+	chmod +x ~/usos-python/sms
+
 	echo '#zamienia znak ~ na sciezke do katalogu domowego' > ~/usos-python/config.py
 	echo 'from os.path import expanduser' >> ~/usos-python/config.py
 	echo 'import subprocess #potrzebne do wykonywania polecen' >> ~/usos-python/config.py
@@ -56,19 +69,6 @@ cd #pracujemy w katalogu domowym
 	echo >> ~/usos-python/config.py
 	~/bin/python ~/usos-python/usos.py
 	
-
-	#wybieramy i instalujemy bramke SMS
-	echo >&2
-        echo ">wybierz bramke SMS (eraapiprv, eraomnix, miastoplusa, orange, playmobile): " >&2
-        select sms_bin in eraapiprv eraomnix miastoplusa orange playmobile
-        do
-                case "$sms_bin" in
-                        eraapiprv|eraomnix|miastoplusa|orange|playmobile) break;;
-                esac
-        done
-	wget "http://skrypty-sms.googlecode.com/svn/trunk/sms.${sms_bin}.pl" -O ~/usos-python/sms
-	chmod +x ~/usos-python/sms
-
 	echo >&2
 	echo "Teraz zapytam o dane do bramki SMS." >&2
 	read -p ">twoj nr tel: " sms_tel
