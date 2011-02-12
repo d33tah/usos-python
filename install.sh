@@ -6,13 +6,13 @@ cd #pracujemy w katalogu domowym
 	rm virtual-python.py
 
 #dzieki temu programy z ~/bin beda mialy pierwszenstwo przed pozostalymi
-	if ["$SHELL"=="/bin/zsh"]; then
-		PROFILE=~/.zshrc
-	fi
+        if [ "$SHELL" = "/bin/zsh" ]; then
+                PROFILE=~/.zshrc
+        fi
 
-	if ["$SHELL"=="/bin/bash"]; then
-		PROFILE=~/.bashrc
-	fi
+        if [ "$SHELL" = "/bin/bash" ]; then
+                PROFILE=~/.bashrc
+        fi
 
 	sed -i '1i \\n#DODANE AUTOMATYCZNIE PRZEZ usos-python:\nPATH=$HOME/bin:$PATH\n' $PROFILE
 	export PATH=$PATH:$HOME/bin
@@ -35,7 +35,7 @@ cd #pracujemy w katalogu domowym
 	git clone git://github.com/d33tah/usos-python.git
 
 #konfigurujemy go... (na razie dziala tylko pod plusem; konieczna rejestracja na simplus.pl)
-	echo '#zamienia znak ~ na sciezke do katalogu domowego' >> ~/usos-python/config.py
+	echo '#zamienia znak ~ na sciezke do katalogu domowego' > ~/usos-python/config.py
 	echo 'from os.path import expanduser' >> ~/usos-python/config.py
 	echo 'import subprocess #potrzebne do wykonywania polecen' >> ~/usos-python/config.py
 
