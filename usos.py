@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     try:
       oceny = usos.pobierz_oceny()
       debug("Pobranie ocen udane")
-    except Exception as e:
+    except Exception,e:
       if str(e[0]).count("Blad logowania")>0:
         print("Potrzebuje przelogowac..."),
         usos.login(login,haslo)
@@ -208,6 +208,6 @@ if __name__ == '__main__':
       powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode('latin1'))
     print "OK."
     exit(0)
-  except Exception as e:
+  except Exception,e:
     print "BLAD: %s" % e[0]
     exit(1)
