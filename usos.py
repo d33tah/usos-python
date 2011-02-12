@@ -6,6 +6,7 @@ Wykrywa zmiany ocen w USOS'ie i reaguje na nie.
 
 Przykladowy config:
 
+import subprocess #zeby moc uruchomic proces
 login = 'PESEL'
 haslo = 'HASLO'
 plik_bazy = 'oceny.sqlite'
@@ -16,6 +17,8 @@ def powiadom(str):
 BY d33tah, LICENSED UNDER WTFPL.
 """
 
+import pickle
+from sys import exit
 import pysqlite2.dbapi2 as sqlite3
 import mechanize
 from lxml import html
@@ -23,6 +26,9 @@ from lxml import html
 from config import *
 
 def t(obj): return obj.text_content()
+def debug(str): pass
+#def debug(str): print str
+#def powiadom(str): print str
 
 class USOS_Baza:
   
@@ -31,51 +37,80 @@ class USOS_Baza:
     self.conn = sqlite3.connect(plik_bazy)
     self.c = self.conn.cursor()
     self.c.execute("CREATE TABLE IF NOT EXISTS oceny " +
-        "(przedmiot TEXT UNIQUE, ocena TEXT)")
+        "(przedmiot TEXT, kod TEXT, ocena TEXT)")
+    self.c.execute("CREATE TABLE IF NOT EXISTS config " +
+        "(klucz TEXT UNIQUE, tresc BLOB)")
     self.conn.commit()
 
     
   def pobierz(self,ocena):
-    print "Pobieram"
-    ret = self.c.execute("SELECT * FROM oceny WHERE przedmiot = ?",
-                                            (ocena.przedmiot,)).fetchone()
+    debug("Pobieram %s" % ocena.przedmiot)
+    ret = self.c.execute("SELECT * FROM oceny WHERE przedmiot = ? AND kod = ?",
+                                            (ocena.przedmiot,ocena.kod)).fetchone()
     if ret:
-      return USOS_Ocena(ret[0],ret[1])
+      return USOS_Ocena(ret[0],ret[1],ret[2])
   
   def dodaj(self,ocena):
-    print "Dodaje"
-    self.c.execute("INSERT INTO oceny VALUES (?,?)",
-                            (ocena.przedmiot,ocena.oceny))
+    debug("Dodaje %s" % ocena.przedmiot)
+    self.c.execute("INSERT INTO oceny VALUES (?,?,?)",
+                            (ocena.przedmiot,ocena.kod,ocena.oceny))
     self.conn.commit()
 
   def aktualizuj(self,ocena):
-    print "Updatuje"
-    self.c.execute("UPDATE oceny SET ocena = ? WHERE przedmiot = ?",
-                            (ocena.oceny,ocena.przedmiot))
+    debug("Updatuje %s" % ocena.przedmiot)
+    self.c.execute("UPDATE oceny SET ocena = ? WHERE przedmiot = ? AND kod = ?",
+                            (ocena.oceny,ocena.przedmiot,ocena.kod))
     self.conn.commit()
+
+  def ustaw_login(self,mech):
+    debug("Pobieram login...");
+    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", ("cookies", )).fetchone()
+
+    if ret:
+      mech._ua_handlers['_cookies'].cookiejar = pickle.loads(str(ret[1]))
+      return True
+    else:
+      return False
+
+  def zapisz_login(self,mech):
+    debug("Zapisuje login...");
+    tresc = pickle.dumps(mech._ua_handlers['_cookies'].cookiejar)
+    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", ("cookies", )).fetchone()
+    if ret:
+      debug("Juz cos jest.")
+      self.c.execute("UPDATE config SET tresc = ? WHERE klucz = ?", (tresc, "cookies")).fetchone()
+      self.conn.commit()
+      return True
+    else:
+      debug("Jeszcze nic nie ma...")
+      self.c.execute("INSERT INTO config VALUES (?,?)" , ("cookies", tresc))
+      self.conn.commit()
+      return True
 
 class USOS_Ocena:
   
   
-  def __init__(self,przedmiot,oceny):
+  def __init__(self,przedmiot,kod,oceny):
     self.przedmiot = przedmiot
+    self.kod = kod
     self.oceny = oceny
     
   def __eq__(obj1,obj2):
     if isinstance(obj1,USOS_Ocena) and isinstance(obj2,USOS_Ocena):
       return obj1.przedmiot == obj2.przedmiot \
+                  and obj1.kod == obj2.kod \
                   and obj1.oceny == obj2.oceny
     else:
       return False
                   
   def __str__(self):
-    return "<USOS_Ocena: %s || %s>" % (self.przedmiot,self.oceny)
+    return "<USOS_Ocena: przedmiot='%s' kod='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.oceny)
 
 
 class USOS:
     
   
-  def __init__(self,login,haslo):
+  def __init__(self):
     
     self.mech = mechanize.Browser()
     self.mech.set_handle_robots(False)
@@ -84,6 +119,8 @@ class USOS:
     #self.mech.addheaders += [("User-agent",user_agent)]
     self.mech.addheaders += [("Accept-Language",
                                       'pl-PL,pl;q=0.8,en-US;q=0.6,en;q=0.4')]
+    
+  def login(self,login,haslo):
     
     self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
     self.mech.select_form(nr=0)
@@ -117,25 +154,60 @@ class USOS:
         continue
       
       o_przedmiot = t(ocena[0][0])
-      #o_kod = t(ocena[0][1])
+      o_kod = t(ocena[1][0])
       
       o_oceny = ''
       for frag in ocena[2]:
         o_oceny += '%s: %s; ' % ( t(frag[0]), t(frag[1]) )
         
-      ret.append(USOS_Ocena(o_przedmiot,o_oceny))
+      ret.append(USOS_Ocena(o_przedmiot,o_kod,o_oceny))
     return ret
     
-if __name__ == '__main__':    
-  baza = USOS_Baza(plik_bazy)
-  usos = USOS(login,haslo)
-  oceny = usos.pobierz_oceny()
-  for ocena in oceny:
-    z_bazy = baza.pobierz(ocena)
-    if z_bazy == ocena:
-      continue
-    elif z_bazy==None:
-      baza.dodaj(ocena)
+  def wyloguj(self):
+    self.mech.open('https://usosweb.uni.lodz.pl/kontroler.php?_action=actionx:logowaniecas/wyloguj()')
+    if self.mech.response().read().find('Wylogowałeś się z CAS - Centralnej Usługi Uwierzytelniania.')==-1:
+      raise Exception('Blad wylogowywania, na pewno byles zalogowany?')
     else:
-      baza.aktualizuj(ocena)
-    powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)) 
+      return True
+
+if __name__ == '__main__':    
+  try:
+    baza = USOS_Baza(plik_bazy)
+    usos = USOS()
+    
+    if not baza.ustaw_login(usos.mech):
+        usos.login(login,haslo)
+        baza.zapisz_login(usos.mech)
+
+    oceny = []
+    try:
+      oceny = usos.pobierz_oceny()
+      debug("Pobranie ocen udane")
+    except Exception as e:
+      if str(e[0]).count("Blad logowania")>0:
+        print("Potrzebuje przelogowac..."),
+        usos.login(login,haslo)
+        baza.zapisz_login(usos.mech)
+        oceny = usos.pobierz_oceny()
+      else:
+        raise
+
+    
+    for ocena in oceny:
+      z_bazy = baza.pobierz(ocena)
+      if z_bazy == ocena:
+        continue
+      elif z_bazy==None:
+        baza.dodaj(ocena)
+      else:
+        baza.aktualizuj(ocena)
+      #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
+      #ponizszych linijek, a zakomentowac druga:
+  
+      #powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
+      powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode('latin1'))
+    print "OK."
+    exit(0)
+  except Exception as e:
+    print "BLAD: %s" % e[0]
+    exit(1)
