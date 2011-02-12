@@ -14,7 +14,7 @@ def powiadom(str):
   return subprocess.call(['/home/g/sms.orange.pl, "docelowy-nr", str, 
     "login", "haslo"])
 
-BY d33tah, LICENSED UNDER CREATIVE COMMONS ATTRIBUTION LICENSE.
+BY d33tah, LICENSED UNDER CREATIVE COMMONS BY-SA LICENSE.
 """
 
 import pickle
