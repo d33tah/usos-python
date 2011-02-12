@@ -59,7 +59,13 @@ cd #pracujemy w katalogu domowym
 
 	#wybieramy i instalujemy bramke SMS
 	echo >&2
-	read -p ">wybierz bramke SMS (eraapiprv, eraomnix, miastoplusa, orange, playmobile): " sms_bin
+        echo ">wybierz bramke SMS (eraapiprv, eraomnix, miastoplusa, orange, playmobile): " >&2
+        select sms_bin in eraapiprv eraomnix miastoplusa orange playmobile
+        do
+                case "$sms_bin" in
+                        eraapiprv|eraomnix|miastoplusa|orange|playmobile) break;;
+                esac
+        done
 	wget "http://skrypty-sms.googlecode.com/svn/trunk/sms.${sms_bin}.pl" -O ~/usos-python/sms
 	chmod +x ~/usos-python/sms
 
