@@ -121,12 +121,20 @@ class USOS:
                                       'pl-PL,pl;q=0.8,en-US;q=0.6,en;q=0.4')]
     
   def login(self,login,haslo):
-    
-    self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
-    self.mech.select_form(nr=0)
-    self.mech.form['username']=login
-    self.mech.form['password']=haslo
-    self.mech.submit()
+
+    try:    
+        self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
+        self.mech.select_form(nr=0)
+        self.mech.form['username']=login
+        self.mech.form['password']=haslo
+        self.mech.submit()
+    except Exception,e:
+        self.mech._ua_handlers['_cookies'].cookiejar = mechanize.CookieJar()
+        self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
+        self.mech.select_form(nr=0)
+        self.mech.form['username']=login
+        self.mech.form['password']=haslo
+        self.mech.submit()
     
     if self.mech.response().read().find('Udane logowanie') == -1:
       raise Exception('Blad logowania po stronie CAS.')
