@@ -162,7 +162,13 @@ class USOS:
         continue
       
       o_przedmiot = t(ocena[0][0])
-      o_kod = t(ocena[1][0])
+ 
+      #zapisz grupy podpiec jako string separowany srednikami. pewnie ladniej by bylo wyrazeniami lambda 
+      #albo jednolinikowym forem, ale nie chcialo mi sie kombinowac.
+      tmp_o_kod = ()
+      for frag in ocena[1]:
+        tmp_o_kod += ( t(frag) ,)
+      o_kod = ' ; '.join(tmp_o_kod)
       
       o_oceny = ''
       for frag in ocena[2]:
