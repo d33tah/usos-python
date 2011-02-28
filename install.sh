@@ -14,9 +14,10 @@ cd #pracujemy w katalogu domowym
                 PROFILE=~/.bashrc
         fi
 
-	sed -i '1i \\n#DODANE AUTOMATYCZNIE PRZEZ usos-python:\nPATH=$HOME/bin:$PATH\n' $PROFILE
-	export PATH=$PATH:$HOME/bin
-
+        if ! grep -q 'PATH=$HOME/bin:$PATH' $PROFILE; then
+                sed -i '1i \\n#DODANE AUTOMATYCZNIE PRZEZ usos-python:\nPATH=$HOME/bin:$PATH\n' $PROFILE
+                export PATH=$PATH:$HOME/bin
+        fi;
 #teraz zainstalujemy nasza wersje easy_install, ktora nie bedzie wymagac uprawnien administratora
 	wget 'http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz'
 	tar xvf setuptools-0.6c11.tar.gz setuptools-0.6c11/ez_setup.py
