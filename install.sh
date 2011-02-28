@@ -1,3 +1,4 @@
+#!/bin/sh
 cd #pracujemy w katalogu domowym
 
 #ustawiamy prywatna konfiguracje pythona. utworzy katalogi ~/bin, ~/lib i ~/include
