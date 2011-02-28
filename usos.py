@@ -15,6 +15,9 @@ def powiadom(str):
     "login", "haslo"])
 
 BY d33tah, LICENSED UNDER CREATIVE COMMONS BY-SA LICENSE.
+
+bpython pastie:
+from config import * ; from usos import * ; usos = USOS(); usos_baza = USOS_Baza(plik_bazy) ; usos.login(login,haslo)
 """
 
 import pickle
