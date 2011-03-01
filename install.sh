@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 cd #pracujemy w katalogu domowym
 
 #ustawiamy prywatna konfiguracje pythona. utworzy katalogi ~/bin, ~/lib i ~/include
@@ -56,6 +56,7 @@ cd #pracujemy w katalogu domowym
 
 	echo >&2
 	echo "Najpierw zapytam o dane do USOS'a (nie wyswietli sie)." >&2
+	trap "stty echo; exit" INT TERM EXIT #jesli skrypt sie przerwie, odblokuj terminal
 	read -s -p ">login: " usos_login
 	echo "login='${usos_login}'" >> ~/usos-python/config.py
         read -s -p ">haslo: " usos_password
