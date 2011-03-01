@@ -55,10 +55,10 @@ cd #pracujemy w katalogu domowym
 	echo 'import subprocess #potrzebne do wykonywania polecen' >> ~/usos-python/config.py
 
 	echo >&2
-	echo "Najpierw zapytam o dane do USOS'a." >&2
-	read -p ">login: " usos_login
+	echo "Najpierw zapytam o dane do USOS'a (nie wyswietli sie)." >&2
+	read -s -p ">login: " usos_login
 	echo "login='${usos_login}'" >> ~/usos-python/config.py
-        read -p ">haslo: " usos_password
+        read -s -p ">haslo: " usos_password
         echo "haslo='${usos_password}'" >> ~/usos-python/config.py
 
 	echo "plik_bazy = expanduser('~/usos-python/oceny.sqlite')" >> ~/usos-python/config.py
@@ -72,10 +72,10 @@ cd #pracujemy w katalogu domowym
 	~/bin/python ~/usos-python/usos.py
 	
 	echo >&2
-	echo "Teraz zapytam o dane do bramki SMS." >&2
+	echo "Teraz zapytam o dane do bramki SMS. (ukryje tylko haslo)" >&2
 	read -p ">twoj nr tel: " sms_tel
 	read -p ">twoj login: " sms_login
-	read -p ">twoje haslo: " sms_password
+	read -s -p ">twoje haslo: " sms_password
 
 	echo "def powiadom(str):" >> ~/usos-python/config.py
 	echo "  return subprocess.call([expanduser('~/usos-python/sms'), '${sms_tel}', str, " >> ~/usos-python/config.py
