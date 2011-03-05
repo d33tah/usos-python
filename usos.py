@@ -110,49 +110,49 @@ class USOS_Ocena:
     return "<USOS_Ocena: przedmiot='%s' kod='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.oceny)
 
 
-class USOS:
+class USOS(mechanize.Browser):
     
   
   def __init__(self):
     
-    self.mech = mechanize.Browser()
-    self.mech.set_handle_robots(False)
+    mechanize.Browser.__init__(self)
+    self.set_handle_robots(False)
     #user_agent = 'Mozilla/4.0 (compatible; MSIE 6.0; ' + \
     #'Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)'
-    #self.mech.addheaders += [("User-agent",user_agent)]
-    self.mech.addheaders += [("Accept-Language",
+    #self.addheaders += [("User-agent",user_agent)]
+    self.addheaders += [("Accept-Language",
                                       'pl-PL,pl;q=0.8,en-US;q=0.6,en;q=0.4')]
     
   def login(self,login,haslo):
 
     try:    
-        self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
-        self.mech.select_form(nr=0)
-        self.mech.form['username']=login
-        self.mech.form['password']=haslo
-        self.mech.submit()
+        self.open('https://logowanie.uni.lodz.pl/cas/login')
+        self.select_form(nr=0)
+        self.form['username']=login
+        self.form['password']=haslo
+        self.submit()
     except Exception,e:
-        self.mech._ua_handlers['_cookies'].cookiejar = mechanize.CookieJar()
-        self.mech.open('https://logowanie.uni.lodz.pl/cas/login')
-        self.mech.select_form(nr=0)
-        self.mech.form['username']=login
-        self.mech.form['password']=haslo
-        self.mech.submit()
+        self._ua_handlers['_cookies'].cookiejar = mechanize.CookieJar()
+        self.open('https://logowanie.uni.lodz.pl/cas/login')
+        self.select_form(nr=0)
+        self.form['username']=login
+        self.form['password']=haslo
+        self.submit()
     
-    if self.mech.response().read().find('Udane logowanie') == -1:
+    if self.response().read().find('Udane logowanie') == -1:
       raise Exception('Blad logowania po stronie CAS.')
     
     #w sumie nie wiem po co to tu, ale bez tego zapytania nie dziala :P
-    self.mech.open('https://usosweb.uni.lodz.pl/kontroler.php?'+
+    self.open('https://usosweb.uni.lodz.pl/kontroler.php?'+
                               '_action=actionx:logowaniecas/index()')
     
   def pobierz_oceny(self):
   
     ret = []
   
-    self.mech.open('https://usosweb.uni.lodz.pl/kontroler.php?'+
+    self.open('https://usosweb.uni.lodz.pl/kontroler.php?'+
                               '_action=actionx:dla_stud/studia/oceny/index()')
-    response = self.mech.response().read()
+    response = self.response().read()
     if response.find("Zalogowany: <b") == -1:
       raise Exception('Blad logowania po stronie USOS.')
     
@@ -181,8 +181,8 @@ class USOS:
     return ret
     
   def wyloguj(self):
-    self.mech.open('https://usosweb.uni.lodz.pl/kontroler.php?_action=actionx:logowaniecas/wyloguj()')
-    if self.mech.response().read().find('Wylogowałeś się z CAS - Centralnej Usługi Uwierzytelniania.')==-1:
+    self.open('https://usosweb.uni.lodz.pl/kontroler.php?_action=actionx:logowaniecas/wyloguj()')
+    if self.response().read().find('Wylogowałeś się z CAS - Centralnej Usługi Uwierzytelniania.')==-1:
       raise Exception('Blad wylogowywania, na pewno byles zalogowany?')
     else:
       return True
@@ -192,9 +192,9 @@ if __name__ == '__main__':
     baza = USOS_Baza(plik_bazy)
     usos = USOS()
     
-    if not baza.ustaw_login(usos.mech):
+    if not baza.ustaw_login(usos):
         usos.login(login,haslo)
-        baza.zapisz_login(usos.mech)
+        baza.zapisz_login(usos)
 
     oceny = []
     try:
@@ -204,7 +204,7 @@ if __name__ == '__main__':
       if str(e[0]).count("Blad logowania")>0:
         print("Potrzebuje przelogowac..."),
         usos.login(login,haslo)
-        baza.zapisz_login(usos.mech)
+        baza.zapisz_login(usos)
         oceny = usos.pobierz_oceny()
       else:
         raise
