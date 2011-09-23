@@ -175,7 +175,10 @@ class USOS(mechanize.Browser):
       
       o_oceny = ''
       for frag in ocena[2]:
-        o_oceny += '%s: %s; ' % ( t(frag[0]), t(frag[1]) )
+        if len(frag)!=3:
+          o_oceny += '%s: %s; ' % ( t(frag[0]), t(frag[1]) )
+        else:
+          o_oceny += '%s: %s %s; ' % ( t(frag[0]), t(frag[1]), t(frag[2]) )
         
       ret.append(USOS_Ocena(o_przedmiot,o_kod,o_oceny))
     return ret
