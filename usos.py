@@ -319,8 +319,8 @@ def policz_srednia():
     print "Średnia ogólna: %s" % (float(wszystkie_suma)/wszystkie_liczba)
 
 if __name__ == '__main__':    
-  policz_srednia()
-  sys.exit(0)
+  #policz_srednia()
+  #sys.exit(0)
 
   baza = USOS_Baza(plik_bazy)
   usos = USOS()
