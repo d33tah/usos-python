@@ -17,7 +17,8 @@ def powiadom(str):
 BY d33tah, LICENSED UNDER CREATIVE COMMONS BY-SA LICENSE.
 
 bpython pastie:
-from config import * ; from usos import * ; usos = USOS(); usos_baza = USOS_Baza(plik_bazy) ; usos.login(login,haslo)
+from config import * ; from usos import * ; usos = USOS(); \ 
+usos_baza = USOS_Baza(plik_bazy) ; usos.login(login,haslo)
 """
 
 import pickle
@@ -47,34 +48,59 @@ class USOS_Baza:
     self.conn = sqlite3.connect(plik_bazy)
     self.c = self.conn.cursor()
     self.c.execute("CREATE TABLE IF NOT EXISTS oceny " +
-        "(przedmiot TEXT, kod TEXT, typ TEXT, do_sredniej TEXT, url TEXT, ocena TEXT)")
+        "(przedmiot TEXT, \
+          kod TEXT, \
+          typ TEXT, \
+          do_sredniej TEXT, \
+          url TEXT, \
+          ocena TEXT)")
     self.c.execute("CREATE TABLE IF NOT EXISTS config " +
-        "(klucz TEXT UNIQUE, tresc BLOB)")
+        "(klucz TEXT UNIQUE, \
+          tresc BLOB)")
     self.conn.commit()
 
     
   def pobierz(self,ocena):
     debug("Pobieram %s" % ocena.przedmiot)
-    ret = self.c.execute("SELECT * FROM oceny WHERE przedmiot = ? AND typ = ? AND url = ? AND kod = ?",
-                                            (ocena.przedmiot,ocena.typ,ocena.url,ocena.kod)).fetchone()
+    ret = self.c.execute("SELECT * FROM oceny WHERE \
+      przedmiot = ? \
+      AND typ = ? \
+      AND url = ? \
+      AND kod = ?",(ocena.przedmiot,ocena.typ,ocena.url,ocena.kod) ).fetchone()
     if ret:
       return USOS_Ocena(ret[0],ret[1],ret[2], ret[3]=="True", ret[4], ret[5])
   
   def dodaj(self,ocena):
     debug("Dodaje %s" % ocena.przedmiot)
     self.c.execute("INSERT INTO oceny VALUES (?,?,?,?,?,?)",
-                            (ocena.przedmiot,ocena.kod,ocena.typ,ocena.do_sredniej,ocena.url,ocena.oceny))
+      (ocena.przedmiot,
+       ocena.kod,
+       ocena.typ,
+       ocena.do_sredniej,
+       ocena.url,
+       ocena.oceny) )
     self.conn.commit()
 
   def aktualizuj(self,ocena):
     debug("Updatuje %s" % ocena.przedmiot)
-    self.c.execute("UPDATE oceny SET ocena = ? WHERE przedmiot = ? AND kod = ? AND typ = ? AND do_sredniej = ? AND url = ?",
-                            (ocena.oceny,ocena.przedmiot,ocena.kod, ocena.typ, ocena.do_sredniej, ocena.url))
+    self.c.execute("UPDATE oceny SET ocena = ? WHERE \
+      przedmiot = ? \
+      AND kod = ? \
+      AND typ = ? \
+      AND do_sredniej = ? \
+      AND url = ?",
+      (ocena.oceny,
+       ocena.przedmiot,
+       ocena.kod, 
+       ocena.typ, 
+       ocena.do_sredniej, 
+       ocena.url))
     self.conn.commit()
 
   def ustaw_login(self,mech):
     debug("Pobieram login...");
-    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", ("cookies", )).fetchone()
+    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", 
+      ("cookies", )).fetchone()
 
     if ret:
       mech._ua_handlers['_cookies'].cookiejar = pickle.loads(str(ret[1]))
@@ -85,10 +111,12 @@ class USOS_Baza:
   def zapisz_login(self,mech):
     debug("Zapisuje login...");
     tresc = pickle.dumps(mech._ua_handlers['_cookies'].cookiejar)
-    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", ("cookies", )).fetchone()
+    ret = self.c.execute("SELECT * FROM config WHERE klucz = ?", 
+      ("cookies", )).fetchone()
     if ret:
       debug("Juz cos jest.")
-      self.c.execute("UPDATE config SET tresc = ? WHERE klucz = ?", (tresc, "cookies")).fetchone()
+      self.c.execute("UPDATE config SET tresc = ? WHERE klucz = ?", 
+        (tresc, "cookies")).fetchone()
       self.conn.commit()
       return True
     else:
@@ -110,17 +138,15 @@ class USOS_Ocena:
     
   def __eq__(obj1,obj2):
     if isinstance(obj1,USOS_Ocena) and isinstance(obj2,USOS_Ocena):
-      return obj1.przedmiot == obj2.przedmiot \
-                  and obj1.kod == obj2.kod \
-                  and obj1.typ == obj2.typ \
-                  and (obj1.do_sredniej=="-1" or obj2.do_sredniej=="-1" or  obj1.do_sredniej == obj2.do_sredniej) \
-                  and obj1.url == obj2.url \
-                  and obj1.oceny == obj2.oceny
-    else:
-      return False
+      return ((obj1.przedmiot,obj1.kod,obj1.typ,obj1.url,obj1.oceny)==
+              (obj2.przedmiot,obj2.kod,obj2.typ,obj2.url,obj2.oceny))
+         and (obj1.do_sredniej=="-1" or obj2.do_sredniej=="-1" or 
+         obj1.do_sredniej==obj2.do_sredniej)
                   
   def __str__(self):
-    return "<USOS_Ocena: przedmiot='%s' kod='%s' typ='%s' do_sredniej='%s' url='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.typ,self.do_sredniej,self.oceny)
+    return "<USOS_Ocena: przedmiot='%s' kod='%s' typ='%s' do_sredniej='%s' \
+url='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.typ,self.do_sredniej,
+self.oceny)
 
 
 class USOS(mechanize.Browser):
@@ -180,8 +206,9 @@ class USOS(mechanize.Browser):
       
       o_przedmiot = t(ocena[0][0])
  
-      #zapisz grupy podpiec jako string separowany srednikami. pewnie ladniej by bylo wyrazeniami lambda 
-      #albo jednolinikowym forem, ale nie chcialo mi sie kombinowac.
+      #zapisz grupy podpiec jako string separowany srednikami. pewnie ladniej by
+      #bylo wyrazeniami lambda albo jednolinikowym forem, ale nie chcialo mi sie
+      #kombinowac.
       tmp_o_kod = ()
       for frag in ocena[1]:
         tmp_o_kod += ( t(frag) ,)
@@ -195,16 +222,20 @@ class USOS(mechanize.Browser):
         url_do_sredniej=ocena[3].find('.//a').get('href')
         #do_sredniej = self.do_sredniej(url,typ_zajec)
         if len(frag)!=3:
-          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,url_do_sredniej,pierwszy_termin ))
+          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,
+            url_do_sredniej,pierwszy_termin ))
         else:
           drugi_termin = t(frag[2])
-          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,url_do_sredniej,pierwszy_termin+' '+drugi_termin))
+          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,
+            url_do_sredniej,pierwszy_termin+' '+drugi_termin))
 
     return ret
     
   def wyloguj(self):
-    self.open('https://usosweb.uni.lodz.pl/kontroler.php?_action=actionx:logowaniecas/wyloguj()')
-    if self.response().read().find('Wylogowałeś się z CAS - Centralnej Usługi Uwierzytelniania.')==-1:
+    self.open('https://usosweb.uni.lodz.pl/kontroler.php?_action='+
+      'actionx:logowaniecas/wyloguj()')
+    if self.response().read().find('Wylogowałeś się z CAS - Centralnej Usługi'+
+        ' Uwierzytelniania.')==-1:
       raise Exception('Blad wylogowywania, na pewno byles zalogowany?')
     else:
       return True
@@ -212,7 +243,8 @@ class USOS(mechanize.Browser):
   def do_sredniej(self,url,typ_zajec):
     print ".", ; sys.stdout.flush()
     tree = html.fromstring(self.open(url).read())
-    tabele = tree.xpath('//table [@class="grey" and contains(.,"'+unicode(typ_zajec)+'")]')
+    tabele = tree.xpath('//table [@class="grey" and '
+      +'contains(.,"'+unicode(typ_zajec)+'")]')
     for tabela in tabele:
       if t(tabela.xpath('.//tr [contains (.,"Czy ocena")]/td[2]//*')[0])=='TAK':
         return True
@@ -259,7 +291,9 @@ def policz_srednia():
           if przedmiot.oceny.startswith('('):
             if przedmiot.do_sredniej:
               liczba+=1
-              suma+=float(przedmiot.oceny.split(') ')[0].replace(',','.').strip('('))+float(przedmiot.oceny.split(') ')[1].replace(',','.'))/2
+              suma+=float(przedmiot.oceny.split(') ')[0].replace(
+                ',','.').strip('('))+float(przedmiot.oceny.split(
+                ') ')[1].replace(',','.'))/2
               #suma+=float(przedmiot.oceny.split(') ')[1].replace(',','.'))
           else:
             if przedmiot.do_sredniej:
@@ -272,7 +306,8 @@ def policz_srednia():
         wszystkie_liczba+=kierunek_liczba
         kierunek_suma+=suma
         wszystkie_suma+=kierunek_suma
-      print "Średnia dla kierunku: %s\n" % (float(kierunek_suma)/kierunek_liczba)
+      print "Średnia dla kierunku: %s\n" % (
+        float(kierunek_suma)/kierunek_liczba)
     print "Średnia ogólna: %s" % (float(wszystkie_suma)/wszystkie_liczba)
 
 if __name__ == '__main__':    
@@ -313,6 +348,7 @@ if __name__ == '__main__':
       #ponizszych linijek, a zakomentowac druga:
   
       powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
-      #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode('latin1'))
+      #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode(
+      #  'latin1'))
     print "OK."
     exit(0)
