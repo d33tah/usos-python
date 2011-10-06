@@ -139,9 +139,9 @@ class USOS_Ocena:
   def __eq__(obj1,obj2):
     if isinstance(obj1,USOS_Ocena) and isinstance(obj2,USOS_Ocena):
       return ((obj1.przedmiot,obj1.kod,obj1.typ,obj1.url,obj1.oceny)==
-              (obj2.przedmiot,obj2.kod,obj2.typ,obj2.url,obj2.oceny))
+              (obj2.przedmiot,obj2.kod,obj2.typ,obj2.url,obj2.oceny)
          and (obj1.do_sredniej=="-1" or obj2.do_sredniej=="-1" or 
-         obj1.do_sredniej==obj2.do_sredniej)
+         obj1.do_sredniej==obj2.do_sredniej))
                   
   def __str__(self):
     return "<USOS_Ocena: przedmiot='%s' kod='%s' typ='%s' do_sredniej='%s' \
@@ -258,6 +258,8 @@ def policz_srednia():
     t_haslo = getpass('Haslo: ')
     usos.login(t_login,t_haslo)
     oceny = usos.pobierz_oceny()
+
+    #uporzadkuj oceny wedlug slownika 'kody'
     kody = {}
     for ocena in oceny:
       tmp_kody = ocena.kod.split(' ')
@@ -267,19 +269,24 @@ def policz_srednia():
       kierunek=tmp_kody[0]
       semestr = tmp_kody[1].replace('('+tmp_kody[0], '').rstrip(')')
       if not semestr:
-        continue
+        semestr='?'
+      elif semestr.find(')')!=-1:
+        semestr = semestr.rsplit(')',1)[1]
       if not kierunek in kody:
         kody[kierunek] = {}
       if not semestr in kody[kierunek]:
          kody[kierunek][semestr] = []
       kody[kierunek][semestr].append(ocena)
+
     wszystkie_liczba=0.0
     wszystkie_suma=0
     for kierunek in kody:
       kierunek_liczba=0.0
       kierunek_suma=0
       print "Kierunek %s" % kierunek
-      for semestr in kody[kierunek]:
+      semestry = kody[kierunek].keys()
+      semestry.sort()
+      for semestr in semestry:
         print "->Semestr %s -" % semestr, 
         liczba = 0.0
         suma = 0
@@ -306,13 +313,14 @@ def policz_srednia():
         wszystkie_liczba+=kierunek_liczba
         kierunek_suma+=suma
         wszystkie_suma+=kierunek_suma
-      print "Średnia dla kierunku: %s\n" % (
-        float(kierunek_suma)/kierunek_liczba)
+      if kierunek_liczba!=0:
+        print "Średnia dla kierunku: %s\n" % (
+          float(kierunek_suma)/kierunek_liczba)
     print "Średnia ogólna: %s" % (float(wszystkie_suma)/wszystkie_liczba)
 
 if __name__ == '__main__':    
-    #policz_srednia()
-    #exit(0)
+    policz_srednia()
+    sys.exit(0)
 
     baza = USOS_Baza(plik_bazy)
     usos = USOS()
@@ -351,4 +359,4 @@ if __name__ == '__main__':
       #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode(
       #  'latin1'))
     print "OK."
-    exit(0)
+    sys.exit(0)
