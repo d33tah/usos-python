@@ -319,44 +319,44 @@ def policz_srednia():
     print "Średnia ogólna: %s" % (float(wszystkie_suma)/wszystkie_liczba)
 
 if __name__ == '__main__':    
-    policz_srednia()
-    sys.exit(0)
+  policz_srednia()
+  sys.exit(0)
 
-    baza = USOS_Baza(plik_bazy)
-    usos = USOS()
-    
-    if not baza.ustaw_login(usos):
-        usos.login(login,haslo)
-        baza.zapisz_login(usos)
-
-    oceny = []
-    try:
-      oceny = usos.pobierz_oceny()
-      debug("Pobranie ocen udane")
-    except Exception,e:
-      if str(e[0]).count("Blad logowania")>0:
-        print("Potrzebuje przelogowac..."),
-        usos.login(login,haslo)
-        baza.zapisz_login(usos)
-        oceny = usos.pobierz_oceny()
-      else:
-        raise
-
-    
-    for ocena in oceny:
-      z_bazy = baza.pobierz(ocena)
-      if z_bazy == ocena:
-        continue
-      ocena.do_sredniej=usos.do_sredniej(ocena.url,ocena.typ)
-      if z_bazy==None:
-        baza.dodaj(ocena)
-      else:
-        baza.aktualizuj(ocena)
-      #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
-      #ponizszych linijek, a zakomentowac druga:
+  baza = USOS_Baza(plik_bazy)
+  usos = USOS()
   
-      powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
-      #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode(
-      #  'latin1'))
-    print "OK."
-    sys.exit(0)
+  if not baza.ustaw_login(usos):
+    #usos.login(login,haslo)
+    #baza.zapisz_login(usos)
+
+  oceny = []
+  try:
+    oceny = usos.pobierz_oceny()
+    debug("Pobranie ocen udane")
+  except Exception,e:
+    if str(e[0]).count("Blad logowania")>0:
+      print("Potrzebuje przelogowac..."),
+      usos.login(login,haslo)
+      baza.zapisz_login(usos)
+      oceny = usos.pobierz_oceny()
+    else:
+      raise
+
+  
+  for ocena in oceny:
+    z_bazy = baza.pobierz(ocena)
+    if z_bazy == ocena:
+      continue
+    ocena.do_sredniej=usos.do_sredniej(ocena.url,ocena.typ)
+    if z_bazy==None:
+      baza.dodaj(ocena)
+    else:
+      baza.aktualizuj(ocena)
+    #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
+    #ponizszych linijek, a zakomentowac druga:
+
+    powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
+    #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode(
+    #  'latin1'))
+  print "OK."
+  sys.exit(0)
