@@ -21,17 +21,24 @@ from config import * ; from usos import * ; usos = USOS(); usos_baza = USOS_Baza
 """
 
 import pickle
-from sys import exit
-import pysqlite2.dbapi2 as sqlite3
+import sys
+
+try:
+  import sqlite3
+except ImportError:
+  import pysqlite2.dbapi2 as sqlite3
 import mechanize
 from lxml import html
 
 from config import *
 
+from getpass import getpass
+
 def t(obj): return obj.text_content()
 def debug(str): pass
 #def debug(str): print str
 #def powiadom(str): print str
+#def powiadom(str): pass
 
 class USOS_Baza:
   
@@ -40,7 +47,7 @@ class USOS_Baza:
     self.conn = sqlite3.connect(plik_bazy)
     self.c = self.conn.cursor()
     self.c.execute("CREATE TABLE IF NOT EXISTS oceny " +
-        "(przedmiot TEXT, kod TEXT, ocena TEXT)")
+        "(przedmiot TEXT, kod TEXT, typ TEXT, do_sredniej TEXT, url TEXT, ocena TEXT)")
     self.c.execute("CREATE TABLE IF NOT EXISTS config " +
         "(klucz TEXT UNIQUE, tresc BLOB)")
     self.conn.commit()
@@ -48,21 +55,21 @@ class USOS_Baza:
     
   def pobierz(self,ocena):
     debug("Pobieram %s" % ocena.przedmiot)
-    ret = self.c.execute("SELECT * FROM oceny WHERE przedmiot = ? AND kod = ?",
-                                            (ocena.przedmiot,ocena.kod)).fetchone()
+    ret = self.c.execute("SELECT * FROM oceny WHERE przedmiot = ? AND typ = ? AND url = ? AND kod = ?",
+                                            (ocena.przedmiot,ocena.typ,ocena.url,ocena.kod)).fetchone()
     if ret:
-      return USOS_Ocena(ret[0],ret[1],ret[2])
+      return USOS_Ocena(ret[0],ret[1],ret[2], ret[3]=="True", ret[4], ret[5])
   
   def dodaj(self,ocena):
     debug("Dodaje %s" % ocena.przedmiot)
-    self.c.execute("INSERT INTO oceny VALUES (?,?,?)",
-                            (ocena.przedmiot,ocena.kod,ocena.oceny))
+    self.c.execute("INSERT INTO oceny VALUES (?,?,?,?,?,?)",
+                            (ocena.przedmiot,ocena.kod,ocena.typ,ocena.do_sredniej,ocena.url,ocena.oceny))
     self.conn.commit()
 
   def aktualizuj(self,ocena):
     debug("Updatuje %s" % ocena.przedmiot)
-    self.c.execute("UPDATE oceny SET ocena = ? WHERE przedmiot = ? AND kod = ?",
-                            (ocena.oceny,ocena.przedmiot,ocena.kod))
+    self.c.execute("UPDATE oceny SET ocena = ? WHERE przedmiot = ? AND kod = ? AND typ = ? AND do_sredniej = ? AND url = ?",
+                            (ocena.oceny,ocena.przedmiot,ocena.kod, ocena.typ, ocena.do_sredniej, ocena.url))
     self.conn.commit()
 
   def ustaw_login(self,mech):
@@ -93,21 +100,27 @@ class USOS_Baza:
 class USOS_Ocena:
   
   
-  def __init__(self,przedmiot,kod,oceny):
+  def __init__(self,przedmiot,kod,typ,do_sredniej,url,oceny):
     self.przedmiot = przedmiot
     self.kod = kod
+    self.typ = typ
+    self.do_sredniej = do_sredniej
+    self.url = url
     self.oceny = oceny
     
   def __eq__(obj1,obj2):
     if isinstance(obj1,USOS_Ocena) and isinstance(obj2,USOS_Ocena):
       return obj1.przedmiot == obj2.przedmiot \
                   and obj1.kod == obj2.kod \
+                  and obj1.typ == obj2.typ \
+                  and (obj1.do_sredniej=="-1" or obj2.do_sredniej=="-1" or  obj1.do_sredniej == obj2.do_sredniej) \
+                  and obj1.url == obj2.url \
                   and obj1.oceny == obj2.oceny
     else:
       return False
                   
   def __str__(self):
-    return "<USOS_Ocena: przedmiot='%s' kod='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.oceny)
+    return "<USOS_Ocena: przedmiot='%s' kod='%s' typ='%s' do_sredniej='%s' url='%s' oceny='%s'>" % (self.przedmiot,self.kod,self.typ,self.do_sredniej,self.oceny)
 
 
 class USOS(mechanize.Browser):
@@ -158,6 +171,7 @@ class USOS(mechanize.Browser):
     
     tree = html.fromstring(response)
     for ocena in tree.xpath('//table [@class = "grey"]//tr'):
+
       
       if len(ocena) != 4:
         continue
@@ -175,12 +189,17 @@ class USOS(mechanize.Browser):
       
       o_oceny = ''
       for frag in ocena[2]:
+        typ_zajec = t(frag[0])
+        pierwszy_termin = t(frag[1])
+        do_sredniej = "-1"
+        url_do_sredniej=ocena[3].find('.//a').get('href')
+        #do_sredniej = self.do_sredniej(url,typ_zajec)
         if len(frag)!=3:
-          o_oceny += '%s: %s; ' % ( t(frag[0]), t(frag[1]) )
+          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,url_do_sredniej,pierwszy_termin ))
         else:
-          o_oceny += '%s: %s %s; ' % ( t(frag[0]), t(frag[1]), t(frag[2]) )
-        
-      ret.append(USOS_Ocena(o_przedmiot,o_kod,o_oceny))
+          drugi_termin = t(frag[2])
+          ret.append(USOS_Ocena(o_przedmiot,o_kod, typ_zajec,do_sredniej,url_do_sredniej,pierwszy_termin+' '+drugi_termin))
+
     return ret
     
   def wyloguj(self):
@@ -190,8 +209,76 @@ class USOS(mechanize.Browser):
     else:
       return True
 
+  def do_sredniej(self,url,typ_zajec):
+    print ".", ; sys.stdout.flush()
+    tree = html.fromstring(self.open(url).read())
+    tabele = tree.xpath('//table [@class="grey" and contains(.,"'+unicode(typ_zajec)+'")]')
+    for tabela in tabele:
+      if t(tabela.xpath('.//tr [contains (.,"Czy ocena")]/td[2]//*')[0])=='TAK':
+        return True
+      else:
+        return False
+    debug("do_sredniej(): Tu nie powinien wejsc! url=%s" % url)
+
+def policz_srednia():
+    usos = USOS()
+    t_login = getpass('PESEL: ')
+    t_haslo = getpass('Haslo: ')
+    usos.login(t_login,t_haslo)
+    oceny = usos.pobierz_oceny()
+    kody = {}
+    for ocena in oceny:
+      tmp_kody = ocena.kod.split(' ')
+      if len(tmp_kody)!=2:
+        debug("tmp_kody!=2 - %s" % ocena.przedmiot)
+        break
+      kierunek=tmp_kody[0]
+      semestr = tmp_kody[1].replace('('+tmp_kody[0], '').rstrip(')')
+      if not semestr:
+        continue
+      if not kierunek in kody:
+        kody[kierunek] = {}
+      if not semestr in kody[kierunek]:
+         kody[kierunek][semestr] = []
+      kody[kierunek][semestr].append(ocena)
+    wszystkie_liczba=0.0
+    wszystkie_suma=0
+    for kierunek in kody:
+      kierunek_liczba=0.0
+      kierunek_suma=0
+      print "Kierunek %s" % kierunek
+      for semestr in kody[kierunek]:
+        print "->Semestr %s -" % semestr, 
+        liczba = 0.0
+        suma = 0
+        for przedmiot in kody[kierunek][semestr]:
+          if przedmiot.oceny=="ZWL":
+            continue
+          if przedmiot.do_sredniej=="-1":
+            przedmiot.do_sredniej=usos.do_sredniej(przedmiot.url,przedmiot.typ)
+          if przedmiot.oceny.startswith('('):
+            if przedmiot.do_sredniej:
+              liczba+=1
+              suma+=float(przedmiot.oceny.split(') ')[0].replace(',','.').strip('('))+float(przedmiot.oceny.split(') ')[1].replace(',','.'))/2
+              #suma+=float(przedmiot.oceny.split(') ')[1].replace(',','.'))
+          else:
+            if przedmiot.do_sredniej:
+              liczba+=1
+              suma+=float(przedmiot.oceny.replace(',','.'))
+        if liczba!=0:
+          print "średnia: %f" % (float(suma)/liczba),
+        print " "
+        kierunek_liczba+=liczba
+        wszystkie_liczba+=kierunek_liczba
+        kierunek_suma+=suma
+        wszystkie_suma+=kierunek_suma
+      print "Średnia dla kierunku: %s\n" % (float(kierunek_suma)/kierunek_liczba)
+    print "Średnia ogólna: %s" % (float(wszystkie_suma)/wszystkie_liczba)
+
 if __name__ == '__main__':    
-  try:
+    #policz_srednia()
+    #exit(0)
+
     baza = USOS_Baza(plik_bazy)
     usos = USOS()
     
@@ -217,17 +304,15 @@ if __name__ == '__main__':
       z_bazy = baza.pobierz(ocena)
       if z_bazy == ocena:
         continue
-      elif z_bazy==None:
+      ocena.do_sredniej=usos.do_sredniej(ocena.url,ocena.typ)
+      if z_bazy==None:
         baza.dodaj(ocena)
       else:
         baza.aktualizuj(ocena)
       #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
       #ponizszych linijek, a zakomentowac druga:
   
-      #powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
-      powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode('latin1'))
+      powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
+      #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode('latin1'))
     print "OK."
     exit(0)
-  except Exception,e:
-    print "BLAD: %s" % e[0]
-    exit(1)
