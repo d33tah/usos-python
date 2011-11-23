@@ -328,7 +328,7 @@ if __name__ == '__main__':
   if not baza.ustaw_login(usos):
     #usos.login(login,haslo)
     #baza.zapisz_login(usos)
-
+  
   oceny = []
   try:
     oceny = usos.pobierz_oceny()
@@ -341,7 +341,7 @@ if __name__ == '__main__':
       oceny = usos.pobierz_oceny()
     else:
       raise
-
+  
   
   for ocena in oceny:
     z_bazy = baza.pobierz(ocena)
@@ -354,7 +354,7 @@ if __name__ == '__main__':
       baza.aktualizuj(ocena)
     #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
     #ponizszych linijek, a zakomentowac druga:
-
+    
     powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
     #powiadom(("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny)).encode(
     #  'latin1'))
