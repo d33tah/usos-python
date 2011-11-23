@@ -326,8 +326,8 @@ if __name__ == '__main__':
   usos = USOS()
   
   if not baza.ustaw_login(usos):
-    #usos.login(login,haslo)
-    #baza.zapisz_login(usos)
+    usos.login(login,haslo)
+    baza.zapisz_login(usos)
   
   oceny = []
   try:
