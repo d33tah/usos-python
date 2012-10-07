@@ -49,8 +49,12 @@ cd #pracujemy w katalogu domowym
         done
 	wget "http://skrypty-sms.googlecode.com/svn/trunk/sms.${sms_bin}.pl" -O ~/usos-python/sms
 	chmod +x ~/usos-python/sms
+	
+	echo > ~/usos-python/config.py
+	echo 'def debug(str): pass' >> ~/usos-python/config.py
+	echo >> ~/usos-python/config.py
 
-	echo '#zamienia znak ~ na sciezke do katalogu domowego' > ~/usos-python/config.py
+	echo '#zamienia znak ~ na sciezke do katalogu domowego' >> ~/usos-python/config.py
 	echo 'from os.path import expanduser' >> ~/usos-python/config.py
 	echo 'import subprocess #potrzebne do wykonywania polecen' >> ~/usos-python/config.py
 
