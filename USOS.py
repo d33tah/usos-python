@@ -4,6 +4,7 @@ import mechanize
 from lxml import html
 
 from USOS_Ocena import USOS_Ocena
+from config import debug
 
 def t(obj): return obj.text_content()
 
@@ -76,8 +77,12 @@ class USOS(mechanize.Browser):
       
       o_oceny = ''
       for frag in ocena[2]:
-        typ_zajec = t(frag[0])
-        pierwszy_termin = t(frag[1])
+        if len(frag)==1:
+          pierwszy_termin = t(frag[0])
+          typ_zajec = "(nieznany)"
+        else:
+          typ_zajec = t(frag[0])
+          pierwszy_termin = t(frag[1])
         do_sredniej = "-1"
         url_do_sredniej=ocena[3].find('.//a').get('href')
         #do_sredniej = self.do_sredniej(url,typ_zajec)
@@ -104,6 +109,8 @@ class USOS(mechanize.Browser):
     tree = html.fromstring(self.open(url).read())
     tabele = tree.xpath('//table [@class="grey" and '
       +'contains(.,"'+unicode(typ_zajec)+'")]')
+    if len(tabele)==0:
+      tabele = tree.xpath('//table [@class="grey"]')
     for tabela in tabele:
       if t(tabela.xpath('.//tr [contains (.,"Czy ocena")]/td[2]//*')[0])=='TAK':
         return True
