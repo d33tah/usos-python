@@ -48,7 +48,7 @@ class USOS_Baza:
     self.conn.commit()
 
   def aktualizuj(self,ocena):
-    debug("Updatuje %s" % ocena.przedmiot)
+    debug("Aktualizuje %s" % ocena.przedmiot)
     self.c.execute("UPDATE oceny SET ocena = ? WHERE \
       przedmiot = ? \
       AND kod = ? \
