@@ -30,7 +30,7 @@ class USOS(mechanize.Browser):
         self.form['password']=haslo
         self.submit()
     except Exception,e:
-	print "HACK: wyjatek w mechanize.Browser().submit(), czyszcze cookies"
+	print "Wyjatek w mechanize.Browser().submit(), czyszcze cookies"
 	print e
         self._ua_handlers['_cookies'].cookiejar = mechanize.CookieJar()
         self.open('https://logowanie.uni.lodz.pl/cas/login')
@@ -42,7 +42,6 @@ class USOS(mechanize.Browser):
     if self.response().read().find('Udane logowanie') == -1:
       raise Exception('Blad logowania po stronie CAS.')
     
-    #w sumie nie wiem po co to tu, ale bez tego zapytania nie dziala :P
     self.open('https://usosweb.uni.lodz.pl/kontroler.php?'+
                               '_action=actionx:logowaniecas/index()')
     
@@ -67,9 +66,7 @@ class USOS(mechanize.Browser):
       
       o_przedmiot = t(ocena[0][0])
  
-      #zapisz grupy podpiec jako string separowany srednikami. pewnie ladniej by
-      #bylo wyrazeniami lambda albo jednolinikowym forem, ale nie chcialo mi sie
-      #kombinowac.
+      #zapisz grupy podpiec jako string separowany srednikami.
       tmp_o_kod = ()
       for frag in ocena[1]:
         tmp_o_kod += ( t(frag) ,)
