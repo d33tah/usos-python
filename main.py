@@ -4,7 +4,7 @@
 """
 Wykrywa zmiany ocen w USOS'ie i reaguje na nie.
 
-Przykladowy config:
+Przykladowy plik konfiguracyjny:
 
 def debug(str): pass
 import subprocess #zeby moc uruchomic proces
@@ -15,9 +15,9 @@ def powiadom(str):
   return subprocess.call(['/home/g/sms.orange.pl, "docelowy-nr", str, 
     "login", "haslo"])
 
-BY d33tah, LICENSED UNDER CREATIVE COMMONS BY-SA LICENSE.
+BY Jacek Wielemborek, LICENSED UNDER CREATIVE COMMONS BY-SA LICENSE.
 
-bpython pastie:
+Kod szybkiego testowania:
 from config import * ; from usos import * ; usos = USOS(); \ 
 usos_baza = USOS_Baza(plik_bazy) ; usos.login(login,haslo)
 """
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     debug("Pobranie ocen udane")
   except Exception,e:
     if str(e[0]).count("Blad logowania")>0:
-      print("Potrzebuje przelogowac..."),
+      print("Potrzebuje ponownie sie zalogowac..."),
       usos.login(login,haslo)
       baza.zapisz_login(usos)
       oceny = usos.pobierz_oceny()
@@ -62,7 +62,7 @@ if __name__ == '__main__':
       baza.dodaj(ocena)
     else:
       baza.aktualizuj(ocena)
-    #w razie bledow z kodowaniem albo krzaczkami, odkomentowac jedna z
+    #w razie bledow z kodowaniem, nalezy odkomentowac jedna z
     #ponizszych linijek, a zakomentowac druga:
     
     powiadom("USOS: %s: %s" % (ocena.przedmiot,ocena.oceny))
