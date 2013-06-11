@@ -26,7 +26,7 @@ import sys
 
 from USOS_Baza import USOS_Baza
 from USOS import USOS
-from config import plik_bazy,login,haslo,debug
+from config import plik_bazy,login,haslo,debug,powiadom
 
 
 if __name__ == '__main__':    
